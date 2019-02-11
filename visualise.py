@@ -7,11 +7,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import numpy as np
 
-land_colour = "#000000"
-water_colour = "#000000"
-boarder_colour = "#d6d6d6"
-data_colour = "#196baa"
-marker_fill_color = '#cc3300'
+land_colour = "#2d3347"
+water_colour = "#2d3347"
+boarder_colour = "#ffffff"
+marker_fill_color = "#18a9a7"
 marker_edge_color = 'None'
 
 def main():
@@ -30,7 +29,7 @@ def main():
 def plotdata(directory):
 
     fig = plt.figure(figsize=(20, 10))
-    ax = fig.add_subplot(111, facecolor='#ffffff', frame_on=False)
+    ax = fig.add_subplot(111, facecolor='#2d3347', frame_on=False)
 
 
     m = Basemap(projection='robin',lon_0=0,resolution='c')
