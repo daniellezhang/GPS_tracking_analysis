@@ -2,8 +2,17 @@
 import gpxpy
 import argparse
 import os
-import matplotlib.pyplot as pyplot
+import pandas as pd
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+import numpy as np
 
+land_colour = "#000000"
+water_colour = "#000000"
+boarder_colour = "#d6d6d6"
+data_colour = "#196baa"
+marker_fill_color = '#cc3300'
+marker_edge_color = 'None'
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,28 +28,41 @@ def main():
 
 #function to plot the data
 def plotdata(directory):
-    fig = pyplot.figure(facecolor = '0.05')
-    ax = pyplot.Axes(fig, [0., 0., 1., 1.], )
-    ax.set_aspect('equal')
-    ax.set_axis_off()
-    fig.add_axes(ax)
+
+    fig = plt.figure(figsize=(20, 10))
+    ax = fig.add_subplot(111, facecolor='#ffffff', frame_on=False)
+
+
+    m = Basemap(projection='robin',lon_0=0,resolution='c')
+    m.drawcoastlines(color = boarder_colour)
+    m.drawmapboundary(fill_color=water_colour)
+    m.fillcontinents(color = land_colour)
+    m.drawcountries(color = boarder_colour)
+
+
     for filename in os.listdir(directory):
-        if '.gpx' in filename:
-            lat = [ ]
-            lon = [ ]
+        if filename.split('.')[-1] == 'gpx':
             gpx_file = open(directory+filename,'r')
             gpx_parser = gpxpy.parse(gpx_file)
             gpx_file.close()
+            df = pd.DataFrame(columns = ['lat','lon'])
             for track in gpx_parser.tracks:
                 for segment in track.segments:
                     for point in segment.points:
-                        lat.append(point.latitude)
-                        lon.append(point.longitude)
-            pyplot.plot(lon, lat, color = 'deepskyblue', lw = 0.2, alpha = 0.8)
+                        df = df.append({'lat': point.latitude,
+                        'lon':point.longitude}, ignore_index = True)
+
+            df['lat'] = df['lat']
+            df['lon'] = df['lon']
+            x,y = m(df['lon'].values,df['lat'].values)
+            m.scatter(x,y, s=8, color=marker_fill_color,
+            edgecolor=marker_edge_color, alpha=1, zorder=3)
 
     filename = directory + 'visual.png'
-    pyplot.savefig(filename, facecolor = fig.get_facecolor(),
+    plt.savefig(filename, facecolor = fig.get_facecolor(),
     bbox_inches='tight', pad_inches=0, dpi=1000)
+
+    plt.show()
 
 
 
