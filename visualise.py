@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #written by Danielle Zhang on 03/02/19
 import gpxpy
 import argparse
@@ -6,7 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import numpy as np
+from rdp import rdp
 
+#aesthetic of the visualisation
 land_colour = "#2d3347"
 water_colour = "#2d3347"
 boarder_colour = "#ffffff"
@@ -24,6 +28,12 @@ def main():
     directory = args.input
     plotdata(directory)
 
+#reduce the number of points to be ploted using ramer–douglas–peucker algorithm
+def optimise(arr):
+    e = 0.00001
+    smoothed_arr = rdp(arr, epsilon = e)
+    smoothed_df = pd.DataFrame({'lon': smoothed_arr[:,0], 'lat':smoothed_arr[:,1]})
+    return smoothed_df
 
 #function to plot the data
 def plotdata(directory):
@@ -44,25 +54,25 @@ def plotdata(directory):
             gpx_file = open(directory+filename,'r')
             gpx_parser = gpxpy.parse(gpx_file)
             gpx_file.close()
-            df = pd.DataFrame(columns = ['lat','lon'])
+
+            n_points = 0
+            arr = np.empty((0))
             for track in gpx_parser.tracks:
                 for segment in track.segments:
                     for point in segment.points:
-                        df = df.append({'lat': point.latitude,
-                        'lon':point.longitude}, ignore_index = True)
+                        n_points += 1
+                        arr = np.append(arr, [point.longitude,point.latitude] )
 
-            df['lat'] = df['lat']
-            df['lon'] = df['lon']
-            x,y = m(df['lon'].values,df['lat'].values)
-            m.scatter(x,y, s=8, color=marker_fill_color,
-            edgecolor=marker_edge_color, alpha=1, zorder=3)
+            arr = np.reshape(arr, (n_points,2))
+            smoothed_df = optimise(arr)
+            x,y = m(smoothed_df['lon'].values,smoothed_df['lat'].values)
+            m.plot(x,y,color=marker_fill_color)
 
     filename = directory + 'visual.png'
     plt.savefig(filename, facecolor = fig.get_facecolor(),
     bbox_inches='tight', pad_inches=0, dpi=1000)
 
     plt.show()
-
 
 
 main()
