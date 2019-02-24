@@ -12,10 +12,14 @@ from rdp import rdp
 
 #aesthetic of the visualisation
 land_colour = "#2d3347"
-water_colour = "#2d3347"
+water_colour = "#12141c"
 boarder_colour = "#ffffff"
 marker_fill_color = "#18a9a7"
 marker_edge_color = 'None'
+
+#default width and height of the map when a centre coordinate is given, in meters
+map_width = 12000
+map_height = 10000
 
 def main():
     parser = argparse.ArgumentParser()
@@ -23,10 +27,16 @@ def main():
     directory = ''
 
     parser.add_argument('-input',help = 'input directory', required = True)
-
+    parser.add_argument('-longitude',help = 'The longitude of the \
+    centre of the visualisation. Default is world map', required = False)
+    parser.add_argument('-latitude',help = 'The latitude of the \
+    centre of the visualisation. Default is world map', required = False)
     args = parser.parse_args()
     directory = args.input
-    plotdata(directory)
+    longitude = args.longitude
+    latitude = args.latitude
+
+    plotdata(directory,longitude, latitude)
 
 #reduce the number of points to be ploted using ramer–douglas–peucker algorithm
 def optimise(arr):
@@ -35,18 +45,24 @@ def optimise(arr):
     smoothed_df = pd.DataFrame({'lon': smoothed_arr[:,0], 'lat':smoothed_arr[:,1]})
     return smoothed_df
 
-#function to plot the data
-def plotdata(directory):
 
+#function to plot the data
+def plotdata(directory,longitude, latitude):
+    #setting up the map
     fig = plt.figure(figsize=(20, 10))
     ax = fig.add_subplot(111, facecolor='#2d3347', frame_on=False)
 
+    if longitude and latitude:
+        m = Basemap(projection='tmerc', lon_0 = longitude, lat_0 = latitude,
+         width = map_width,height = map_height)
+    else:
+        m = Basemap(projection='robin',lon_0=0,resolution='c')
 
-    m = Basemap(projection='robin',lon_0=0,resolution='c')
     m.drawcoastlines(color = boarder_colour)
     m.drawmapboundary(fill_color=water_colour)
     m.fillcontinents(color = land_colour)
     m.drawcountries(color = boarder_colour)
+    m.drawrivers(color = boarder_colour)
 
 
     for filename in os.listdir(directory):
@@ -72,7 +88,6 @@ def plotdata(directory):
     plt.savefig(filename, facecolor = fig.get_facecolor(),
     bbox_inches='tight', pad_inches=0, dpi=1000)
 
-    plt.show()
 
 
 main()
