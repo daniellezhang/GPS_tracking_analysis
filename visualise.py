@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#python ./visualise.py -input ./sample_data/ -latitude -37.8136 -longitude 144.9631
 #written by Danielle Zhang on 03/02/19
 import gpxpy
 import argparse
@@ -17,9 +17,13 @@ boarder_colour = "#ffffff"
 marker_fill_color = "#18a9a7"
 marker_edge_color = 'None'
 
-#default width and height of the map when a centre coordinate is given, in meters
-map_width = 12000
-map_height = 10000
+#default width and height of the map when a centre coordinate is given, in metres
+map_width = 12*1000
+map_height = 10*1000
+
+#approximate conversion from 1 degre of latitude and longitude to metres
+lat_conversion = 110.574*1000
+lon_conversion = 111.320*1000
 
 def main():
     parser = argparse.ArgumentParser()
@@ -45,6 +49,18 @@ def optimise(arr):
     smoothed_df = pd.DataFrame({'lon': smoothed_arr[:,0], 'lat':smoothed_arr[:,1]})
     return smoothed_df
 
+#check if the point is in the map. return false if the point isn't inside the map
+def map_check(lon, lat, centre_lon, centre_lat):
+    # approximate the corner?!?
+    if abs(centre_lon-lon)*lon_conversion < map_width/2 and \
+    abs(centre_lat-lat)*lat_conversion < map_height/2:
+        return True
+
+    return False
+
+
+
+
 
 #function to plot the data
 def plotdata(directory,longitude, latitude):
@@ -62,7 +78,6 @@ def plotdata(directory,longitude, latitude):
     m.drawmapboundary(fill_color=water_colour)
     m.fillcontinents(color = land_colour)
     m.drawcountries(color = boarder_colour)
-    m.drawrivers(color = boarder_colour)
 
 
     for filename in os.listdir(directory):
@@ -76,8 +91,15 @@ def plotdata(directory,longitude, latitude):
             for track in gpx_parser.tracks:
                 for segment in track.segments:
                     for point in segment.points:
-                        n_points += 1
-                        arr = np.append(arr, [point.longitude,point.latitude] )
+                        if longitude and latitude:
+                            if map_check(point.longitude,point.latitude,
+                            float(longitude),float(latitude)):
+                                n_points += 1
+                                arr = np.append(arr, [point.longitude,point.latitude])
+                        else:
+                            n_points += 1
+                            arr = np.append(arr, [point.longitude,point.latitude])
+
 
             arr = np.reshape(arr, (n_points,2))
             smoothed_df = optimise(arr)
@@ -90,4 +112,5 @@ def plotdata(directory,longitude, latitude):
 
 
 
-main()
+if __name__ == "__main__":
+    main()
