@@ -59,27 +59,9 @@ def map_check(lon, lat, centre_lon, centre_lat):
     return False
 
 
-
-
-
-#function to plot the data
-def plotdata(directory,longitude, latitude):
-    #setting up the map
-    fig = plt.figure(figsize=(20, 10))
-    ax = fig.add_subplot(111, facecolor='#2d3347', frame_on=False)
-
-    if longitude and latitude:
-        m = Basemap(projection='tmerc', lon_0 = longitude, lat_0 = latitude,
-         width = map_width,height = map_height)
-    else:
-        m = Basemap(projection='robin',lon_0=0,resolution='c')
-
-    m.drawcoastlines(color = boarder_colour)
-    m.drawmapboundary(fill_color=water_colour)
-    m.fillcontinents(color = land_colour)
-    m.drawcountries(color = boarder_colour)
-
-
+#process the files and return an array of dataframes
+def read_file(directory, longitude, latitude):
+    df_arr = []
     for filename in os.listdir(directory):
         if filename.split('.')[-1] == 'gpx':
             gpx_file = open(directory+filename,'r')
@@ -103,8 +85,33 @@ def plotdata(directory,longitude, latitude):
 
             arr = np.reshape(arr, (n_points,2))
             smoothed_df = optimise(arr)
-            x,y = m(smoothed_df['lon'].values,smoothed_df['lat'].values)
-            m.plot(x,y,color=marker_fill_color)
+            df_arr.append(smoothed_df)
+
+    return df_arr
+
+
+#function to plot the data
+def plotdata(directory,longitude, latitude):
+    #setting up the map
+    fig = plt.figure(figsize=(20, 10))
+    ax = fig.add_subplot(111, facecolor='#2d3347', frame_on=False)
+
+    if longitude and latitude:
+        m = Basemap(projection='tmerc', lon_0 = longitude, lat_0 = latitude,
+         width = map_width,height = map_height)
+    else:
+        m = Basemap(projection='robin',lon_0=0,resolution='c')
+
+    m.drawcoastlines(color = boarder_colour)
+    m.drawmapboundary(fill_color=water_colour)
+    m.fillcontinents(color = land_colour)
+    m.drawcountries(color = boarder_colour)
+
+
+    df_arr = read_file(directory, longitude, latitude)
+    for df in df_arr:
+        x,y = m(df['lon'].values,df['lat'].values)
+        m.plot(x,y,color=marker_fill_color)
 
     filename = directory + 'visual.png'
     plt.savefig(filename, facecolor = fig.get_facecolor(),
