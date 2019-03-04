@@ -89,6 +89,28 @@ def read_file(directory, longitude, latitude):
 
     return df_arr
 
+def read_file(directory):
+    df_arr = []
+    for filename in os.listdir(directory):
+        if filename.split('.')[-1] == 'gpx':
+            gpx_file = open(directory+filename,'r')
+            gpx_parser = gpxpy.parse(gpx_file)
+            gpx_file.close()
+
+            n_points = 0
+            arr = np.empty((0))
+            for track in gpx_parser.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        n_points += 1
+                        arr = np.append(arr, [point.longitude,point.latitude])
+
+
+            arr = np.reshape(arr, (n_points,2))
+            smoothed_df = optimise(arr)
+            df_arr.append(smoothed_df)
+
+    return df_arr
 
 #function to plot the data
 def plotdata(directory,longitude, latitude):
