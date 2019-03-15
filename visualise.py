@@ -46,8 +46,8 @@ def main():
 def optimise(arr):
     e = 0.00001
     smoothed_arr = rdp(arr, epsilon = e)
-    smoothed_df = pd.DataFrame({'lon': smoothed_arr[:,0], 'lat':smoothed_arr[:,1]})
-    return smoothed_df
+    #smoothed_df = pd.DataFrame({'lon': smoothed_arr[:,0], 'lat':smoothed_arr[:,1]})
+    return smoothed_arr
 
 #check if the point is in the map. return false if the point isn't inside the map
 def map_check(lon, lat, centre_lon, centre_lat):
@@ -59,38 +59,8 @@ def map_check(lon, lat, centre_lon, centre_lat):
     return False
 
 
-#process the files and return an array of dataframes
-def read_file(directory, longitude, latitude):
-    df_arr = []
-    for filename in os.listdir(directory):
-        if filename.split('.')[-1] == 'gpx':
-            gpx_file = open(directory+filename,'r')
-            gpx_parser = gpxpy.parse(gpx_file)
-            gpx_file.close()
-
-            n_points = 0
-            arr = np.empty((0))
-            for track in gpx_parser.tracks:
-                for segment in track.segments:
-                    for point in segment.points:
-                        if longitude and latitude:
-                            if map_check(point.longitude,point.latitude,
-                            float(longitude),float(latitude)):
-                                n_points += 1
-                                arr = np.append(arr, [point.longitude,point.latitude])
-                        else:
-                            n_points += 1
-                            arr = np.append(arr, [point.longitude,point.latitude])
-
-
-            arr = np.reshape(arr, (n_points,2))
-            smoothed_df = optimise(arr)
-            df_arr.append(smoothed_df)
-
-    return df_arr
-
 def read_file(directory):
-    df_arr = []
+    data_arr = []
     for filename in os.listdir(directory):
         if filename.split('.')[-1] == 'gpx':
             gpx_file = open(directory+filename,'r')
@@ -103,14 +73,14 @@ def read_file(directory):
                 for segment in track.segments:
                     for point in segment.points:
                         n_points += 1
-                        arr = np.append(arr, [point.longitude,point.latitude])
+                        arr = np.append(arr, [point.latitude,point.longitude])
 
 
             arr = np.reshape(arr, (n_points,2))
-            smoothed_df = optimise(arr)
-            df_arr.append(smoothed_df)
+            smoothed_arr = optimise(arr)
+            data_arr.append(smoothed_arr)
 
-    return df_arr
+    return data_arr
 
 #function to plot the data
 def plotdata(directory,longitude, latitude):
@@ -130,8 +100,9 @@ def plotdata(directory,longitude, latitude):
     m.drawcountries(color = boarder_colour)
 
 
-    df_arr = read_file(directory, longitude, latitude)
-    for df in df_arr:
+    data_arr = read_file(directory)
+    for arr in data_arr:
+        df = pd.DataFrame({'lon': arr[:,1], 'lat':arr[:,0]})
         x,y = m(df['lon'].values,df['lat'].values)
         m.plot(x,y,color=marker_fill_color)
 
