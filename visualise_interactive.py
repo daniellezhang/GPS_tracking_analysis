@@ -19,8 +19,7 @@ def interactive(directory):
     df_arr = read_file(directory)
     for df in df_arr:
         folium.PolyLine(df, color = "#42bcf4").add_to(map)
-
-
+        
     map.save('./folium.html')
 
 
